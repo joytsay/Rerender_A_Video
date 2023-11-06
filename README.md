@@ -22,7 +22,7 @@ in SIGGRAPH Asia 2023 Conference Proceedings <br>
 https://github.com/williamyang1991/Rerender_A_Video/assets/18130694/811fdea3-f0da-49c9-92b8-2d2ad360f0d6
 
 ## Updates
-
+- [10/2023] New features: [Loose cross-frame attention](#loose-cross-frame-attention) and [FreeU](#freeu).
 - [09/2023] Code is released.
 - [09/2023] Accepted to SIGGRAPH Asia 2023 Conference Proceedings!
 - [06/2023] Integrated to 🤗 [Hugging Face](https://huggingface.co/spaces/Anonymous-sub/Rerender). Enjoy the web demo!
@@ -30,6 +30,7 @@ https://github.com/williamyang1991/Rerender_A_Video/assets/18130694/811fdea3-f0d
 
 ### TODO
 - [x] Integrate into Diffusers.
+- [x] ~~Integrate [FreeU](https://github.com/ChenyangSi/FreeU) into Rerender~~
 - [x] ~~Add Inference instructions in README.md.~~
 - [x] ~~Add Examples to webUI.~~
 - [x] ~~Add optional poisson fusion to the pipeline.~~
@@ -79,22 +80,27 @@ python rerender.py --cfg config/real2sculpture.json
 1. Install [CUDA](https://developer.nvidia.com/cuda-toolkit-archive)
 2. Install [git](https://git-scm.com/download/win)
 3. Install [VS](https://visualstudio.microsoft.com/) with Windows 10/11 SDK (for building deps/ebsynth/bin/ebsynth.exe)
+4. [Here](https://github.com/williamyang1991/Rerender_A_Video/issues/18#issuecomment-1752712233) are more information. If building ebsynth fails, we provides our complied [ebsynth](https://drive.google.com/drive/folders/1oSB3imKwZGz69q2unBUfcgmQpzwccoyD?usp=sharing). 
 </details>
 
-<details>
-<summary>Installation or Running Fails?</summary>
+<details id="issues">
+<summary>🔥🔥🔥 <b>Installation or Running Fails?</b> 🔥🔥🔥</summary>
 
 1. In case building ebsynth fails, we provides our complied [ebsynth](https://drive.google.com/drive/folders/1oSB3imKwZGz69q2unBUfcgmQpzwccoyD?usp=sharing)
 2. `FileNotFoundError: [Errno 2] No such file or directory: 'xxxx.bin' or 'xxxx.jpg'`:
     - make sure your path only contains English letters or _ (https://github.com/williamyang1991/Rerender_A_Video/issues/18#issuecomment-1723361433)
+    - find the code `python video_blend.py ...` in the error log and use it to manually run the ebsynth part, which is more stable than WebUI.
     - if some non-keyframes are generated but somes are not, rather than missing all non-keyframes in '/out_xx/', you may refer to https://github.com/williamyang1991/Rerender_A_Video/issues/38#issuecomment-1730668991
 5. `KeyError: 'dataset'`: upgrade Gradio to the latest version (https://github.com/williamyang1991/Rerender_A_Video/issues/14#issuecomment-1722778672, https://github.com/AUTOMATIC1111/stable-diffusion-webui/issues/11855)
 6. Error when processing videos: manually install ffmpeg (https://github.com/williamyang1991/Rerender_A_Video/issues/19#issuecomment-1723685825, https://github.com/williamyang1991/Rerender_A_Video/issues/29#issuecomment-1726091112)
 7. `ERR_ADDRESS_INVALID` Cannot open the webUI in browser: replace 0.0.0.0 with 127.0.0.1 in webUI.py (https://github.com/williamyang1991/Rerender_A_Video/issues/19#issuecomment-1723685825)
-8. `CUDA out of memory`: (https://github.com/williamyang1991/Rerender_A_Video/pull/23#issue-1900789461)
-9. `AttributeError: module 'keras.backend' has no attribute 'is_tensor'`: update einops (https://github.com/williamyang1991/Rerender_A_Video/issues/26#issuecomment-1726682446)
-10. `IndexError: list index out of range`: use the original DDIM steps of 20 (https://github.com/williamyang1991/Rerender_A_Video/issues/30#issuecomment-1729039779)
- 
+8. `CUDA out of memory`:
+     - Using xformers (https://github.com/williamyang1991/Rerender_A_Video/pull/23#issue-1900789461)
+     - Set `"use_limit_device_resolution"` to `true` in the config to resize the video according to your VRAM (https://github.com/williamyang1991/Rerender_A_Video/issues/79). An example config `config/van_gogh_man_dynamic_resolution.json` is provided.
+10. `AttributeError: module 'keras.backend' has no attribute 'is_tensor'`: update einops (https://github.com/williamyang1991/Rerender_A_Video/issues/26#issuecomment-1726682446)
+11. `IndexError: list index out of range`: use the original DDIM steps of 20 (https://github.com/williamyang1991/Rerender_A_Video/issues/30#issuecomment-1729039779)
+12. One-click installation https://github.com/williamyang1991/Rerender_A_Video/issues/99
+
 </details>
 
 
@@ -118,7 +124,7 @@ Upload your video, input the prompt, select the seed, and hit:
 
 We provide abundant advanced options to play with
 
-<details>
+<details id="option0">
 <summary> <b>Using customized models</b></summary>
 
 - Using LoRA/Dreambooth/Finetuned/Mixed SD models
@@ -128,11 +134,11 @@ We provide abundant advanced options to play with
   - Add more options like `control_type = gr.Dropdown(['HED', 'canny', 'depth']` here https://github.com/williamyang1991/Rerender_A_Video/blob/b6cafb5d80a79a3ef831c689ffad92ec095f2794/webUI.py#L690
   - Add model loading options like `elif control_type == 'depth':` following https://github.com/williamyang1991/Rerender_A_Video/blob/b6cafb5d80a79a3ef831c689ffad92ec095f2794/webUI.py#L88
   - Add model detectors like `elif control_type == 'depth':` following https://github.com/williamyang1991/Rerender_A_Video/blob/b6cafb5d80a79a3ef831c689ffad92ec095f2794/webUI.py#L122
-  - One example is given [here](https://huggingface.co/spaces/Anonymous-sub/Rerender/discussions/10/files) 
-  
+  - One example is given [here](https://huggingface.co/spaces/Anonymous-sub/Rerender/discussions/10/files)
+
 </details>
 
-<details>
+<details id="option1">
 <summary> <b>Advanced options for the 1st frame translation</b></summary>
 
 1. Resolution related (**Frame resolution**, **left/top/right/bottom crop length**): crop the frame and resize its short side to 512.
@@ -151,34 +157,38 @@ We provide abundant advanced options to play with
      - [revAnimated_v11](https://civitai.com/models/7371/rev-animated?modelVersionId=19575): a semi-realistic (2.5D) model
      - [realisticVisionV20_v20](https://civitai.com/models/4201?modelVersionId=29460): a photo-realistic model
    - **Added prompt/Negative prompt**: supplementary prompts
+5. FreeU related:
+   - **FreeU first/second-stage backbone factor**: =1 do nothing; >1 enhance output color and details
+   - **FreeU first/second-stage skip factor**: =1 do nothing; <1 enhance output color and details
 
 </details>
 
-<details>
+<details id="option2">
 <summary> <b>Advanced options for the key frame translation</b></summary>
 
 1. Key frame related
    - **Key frame frequency (K)**: Uniformly sample the key frame every K frames. Small value for large or fast motions.
    - **Number of key frames (M)**: The final output video will have K*M+1 frames with M+1 key frames.
 2. Temporal consistency related
-   - Cross-frame attention: 
+   - Cross-frame attention:
      - **Cross-frame attention start/end**: When applying cross-frame attention for global style consistency
      - **Cross-frame attention update frequency (N)**: Update the reference style frame every N key frames. Should be large for long videos to avoid error accumulation.
-   - **Shape-aware fusion** Check to use this feature 
+     - **Loose Cross-frame attention**: Using cross-frame attention in fewer layers to better match the input video (for video with large motions)
+   - **Shape-aware fusion** Check to use this feature
      - **Shape-aware fusion start/end**: When applying shape-aware fusion for local shape consistency
-   - **Pixel-aware fusion** Check to use this feature 
+   - **Pixel-aware fusion** Check to use this feature
      - **Pixel-aware fusion start/end**: When applying pixel-aware fusion for pixel-level temporal consistency
      - **Pixel-aware fusion strength**: The strength to preserve the non-inpainting region. Small to avoid error accumulation. Large to avoid burry textures.
      - **Pixel-aware fusion detail level**: The strength to sharpen the inpainting region. Small to avoid error accumulation. Large to avoid burry textures.
      - **Smooth fusion boundary**: Check to smooth the inpainting boundary (avoid error accumulation).
-   - **Color-aware AdaIN** Check to use this feature 
+   - **Color-aware AdaIN** Check to use this feature
      - **Color-aware AdaIN start/end**: When applying AdaIN to make the video color consistent with the first frame
 
 </details>
 
-<details>
+<details id="option3">
 <summary> <b>Advanced options for the full video translation</b></summary>
-  
+
 1. **Gradient blending**: apply Poisson Blending to reduce ghosting artifacts. May slow the process and increase flickers.
 2. **Number of parallel processes**: multiprocessing to speed up the process. Large value (8) is recommended.
 </details>
@@ -208,9 +218,9 @@ Set the options via a config file. For example,
 python rerender.py --cfg config/van_gogh_man.json
 ```
 
-The script will run the full pipeline. 
-We provide some examples of the config in `config` directory. 
-Most options in the config is the same as those in WebUI. 
+The script will run the full pipeline.
+We provide some examples of the config in `config` directory.
+Most options in the config is the same as those in WebUI.
 Please check the explanations in the WebUI section.
 
 Specifying customized models by setting `sd_model` in config. For example:
@@ -239,9 +249,9 @@ python rerender.py --cfg config/van_gogh_man.json -nr
 
 #### Our Ebsynth implementation
 
-We provide a separate Ebsynth python script `video_blend.py` with the temporal blending algorithm introduced in 
-[Stylizing Video by Example](https://dcgi.fel.cvut.cz/home/sykorad/ebsynth.html) for interpolating style between key frames. 
-It can work on your own stylized key frames independently of our Rerender algorithm. 
+We provide a separate Ebsynth python script `video_blend.py` with the temporal blending algorithm introduced in
+[Stylizing Video by Example](https://dcgi.fel.cvut.cz/home/sykorad/ebsynth.html) for interpolating style between key frames.
+It can work on your own stylized key frames independently of our Rerender algorithm.
 
 Usage:
 ```shell
@@ -331,7 +341,17 @@ Video stylization and video editing.
 
 https://github.com/williamyang1991/Rerender_A_Video/assets/18130694/1b72585c-99c0-401d-b240-5b8016df7a3f
 
+## New Features
 
+Compared to the conference version, we are keeping adding new features.
+
+![new_feature](https://github.com/williamyang1991/Rerender_A_Video/assets/18130694/98f39f3d-3dfe-4de4-a1b6-99a3c78b5336)
+
+#### Loose cross-frame attention
+By using cross-frame attention in less layers, our results will better match the input video, thus reducing ghosting artifacts caused by inconsistencies. This feature can be activated by checking `Loose Cross-frame attention` in the <a href="#option2">Advanced options for the key frame translation</a> for WebUI or setting `loose_cfattn` for script (see `config/real2sculpture_loose_cfattn.json`).
+
+#### FreeU
+[FreeU](https://github.com/ChenyangSi/FreeU) is a method that improves diffusion model sample quality at no costs. We find featured with FreeU, our results will have higher contrast and saturation, richer details, and more vivid colors. This feature can be used by setting FreeU backbone factors and skip factors in the <a href="#option1">Advanced options for the 1st frame translation</a> for WebUI or setting `freeu_args` for script (see `config/real2sculpture_freeu.json`).
 
 ## Citation
 

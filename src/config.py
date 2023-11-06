@@ -28,6 +28,7 @@ class RerenderConfig:
                                control_strength=1,
                                seed: int = -1,
                                image_resolution: int = 512,
+                               use_limit_device_resolution: bool = False,
                                x0_strength: float = -1,
                                style_update_freq: int = 10,
                                cross_period: Tuple[float, float] = (0, 1),
@@ -38,6 +39,8 @@ class RerenderConfig:
                                inner_strength: float = 0.9,
                                smooth_boundary: bool = True,
                                color_preserve: bool = True,
+                               loose_cfattn: bool = False,
+                               freeu_args: Tuple[int] = (1, 1, 1, 1),
                                **kwargs):
         self.input_path = input_path
         self.output_path = output_path
@@ -73,6 +76,7 @@ class RerenderConfig:
         self.control_strength = control_strength
         self.seed = seed
         self.image_resolution = image_resolution
+        self.use_limit_device_resolution = use_limit_device_resolution
         self.x0_strength = x0_strength
         self.style_update_freq = style_update_freq
         self.cross_period = cross_period
@@ -83,6 +87,8 @@ class RerenderConfig:
         self.inner_strength = inner_strength
         self.smooth_boundary = smooth_boundary
         self.color_preserve = color_preserve
+        self.loose_cfattn = loose_cfattn
+        self.freeu_args = freeu_args
 
         os.makedirs(self.input_dir, exist_ok=True)
         os.makedirs(self.work_dir, exist_ok=True)
@@ -119,6 +125,7 @@ class RerenderConfig:
         append_if_not_none('control_strength')
         append_if_not_none('seed')
         append_if_not_none('image_resolution')
+        append_if_not_none('use_limit_device_resolution')
         append_if_not_none('x0_strength')
         append_if_not_none('style_update_freq')
         append_if_not_none('cross_period')
@@ -129,6 +136,8 @@ class RerenderConfig:
         append_if_not_none('inner_strength')
         append_if_not_none('smooth_boundary')
         append_if_not_none('color_perserve')
+        append_if_not_none('loose_cfattn')
+        append_if_not_none('freeu_args')
         self.create_from_parameters(**kwargs)
 
     @property

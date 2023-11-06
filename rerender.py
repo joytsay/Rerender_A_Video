@@ -25,6 +25,7 @@ from flow.flow_utils import get_warped_and_mask
 from src.config import RerenderConfig
 from src.controller import AttentionControl
 from src.ddim_v_hacked import DDIMVSampler
+from src.freeu import freeu_forward
 from src.img_util import find_flat_region, numpy2tensor
 from src.video_util import frame_to_video, get_fps, prepare_frames
 
@@ -55,8 +56,7 @@ def apply_color_correction(correction, original_image):
 def rerender(cfg: RerenderConfig, first_img_only: bool, key_video_path: str):
 
     # Preprocess input
-    prepare_frames(cfg.input_path, cfg.input_dir, cfg.image_resolution,
-                   cfg.crop)
+    prepare_frames(cfg.input_path, cfg.input_dir, cfg.image_resolution, cfg.crop, cfg.use_limit_device_resolution)
 
     # Load models
     if cfg.control_type == 'HED':
@@ -99,6 +99,8 @@ def rerender(cfg: RerenderConfig, first_img_only: bool, key_video_path: str):
         print('Warning: We suggest you download the fine-tuned VAE',
               'otherwise the generation quality will be degraded')
 
+    model.model.diffusion_model.forward = \
+        freeu_forward(model.model.diffusion_model, *cfg.freeu_args)
     ddim_v_sampler = DDIMVSampler(model)
 
     flow_model = GMFlow(
@@ -140,7 +142,7 @@ def rerender(cfg: RerenderConfig, first_img_only: bool, key_video_path: str):
     firstx0 = True
     controller = AttentionControl(cfg.inner_strength, cfg.mask_period,
                                   cfg.cross_period, cfg.ada_period,
-                                  cfg.warp_period)
+                                  cfg.warp_period, cfg.loose_cfattn)
 
     imgs = sorted(os.listdir(cfg.input_dir))
     imgs = [os.path.join(cfg.input_dir, img) for img in imgs]
@@ -213,10 +215,13 @@ def rerender(cfg: RerenderConfig, first_img_only: bool, key_video_path: str):
     if first_img_only:
         exit(0)
 
-    for i in range(0, cfg.frame_count - 1, cfg.interval):
+    for i in range(0, min(len(imgs), cfg.frame_count) - 1, cfg.interval):
         cid = i + 1
-        frame = cv2.imread(imgs[i + 1])
         print(cid)
+        if cid <= (len(imgs) - 1):
+            frame = cv2.imread(imgs[cid])
+        else:
+            frame = cv2.imread(imgs[len(imgs) - 1])
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = HWC3(frame)
 
@@ -312,9 +317,8 @@ def rerender(cfg: RerenderConfig, first_img_only: bool, key_video_path: str):
             blend_results_rec_new = model.decode_first_stage(xtrg_)
             tmp = (abs(blend_results_rec_new - blend_results).mean(
                 dim=1, keepdims=True) > 0.25).float()
-            mask_x = F.max_pool2d((F.interpolate(tmp,
-                                                 scale_factor=1 / 8.,
-                                                 mode='bilinear') > 0).float(),
+            mask_x = F.max_pool2d((F.interpolate(
+                tmp, scale_factor=1 / 8., mode='bilinear') > 0).float(),
                                   kernel_size=3,
                                   stride=1,
                                   padding=1)
