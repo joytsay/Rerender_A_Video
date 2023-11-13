@@ -9,16 +9,16 @@ services:
       args:
         - TAG=render:latest
     environment:
-      USER_ID: 1001 # optional
+      USER_ID: 5004 # optional
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: all
       # CLI_ARGS: webUI.py # optional
     image:  render:latest
     shm_size: "24gb" # optional
     volumes:
-      - /mnt/yourhost/render/models:/app/models:rw
-      - /mnt/yourhost/render/output/results:/app/result:rw
-      - /mnt/yourhost/render/usercache:/home/app/.cache:rw
+      - /mnt/data/joy.tsay/render/models:/app/models:rw
+      - /mnt/data/joy.tsay/render/output/results:/app/result:rw
+      - /mnt/data/joy.tsay/render/usercache:/home/app/.cache:rw
     ports:
       - "7860:7860"
     restart: unless-stopped

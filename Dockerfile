@@ -1,11 +1,12 @@
 ### Builder image
-FROM nvidia/cuda:12.2.0-devel-ubuntu22.04
+FROM dd1:5000/workspace:pytorch2.0.1-cuda11.8-torchface1.12.0.1.extra
+USER root
 
 # https://developer.nvidia.com/cuda-gpus
 ENV TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST:-3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX}"
 ENV CLI_ARGS="${CLI_ARGS:-webUI.py}"
 ENV CONTAINER_PORT="${CONTAINER_PORT:-7860}"
-ENV USER_ID="${USER_ID:-1001}"
+# ENV USER_ID="${USER_ID:-5004}"
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw \
   apt-get update && \
@@ -14,13 +15,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw \
   rm -rf /var/lib/apt/lists/*
 
 # add user and drop root privileges
-RUN useradd -m -u ${USER_ID} -d /home/app app && \
+RUN useradd -m -u 5004 -d /home/app app && \
   mkdir -p /app && \
   chown -R app:app /app
 USER app
 
 # Clone repo abd submodules
-RUN git clone --depth=1 https://github.com/williamyang1991/Rerender_A_Video.git --recursive /app
+RUN git clone --depth=1 https://github.com/joytsay/Rerender_A_Video.git --recursive /app
 
 WORKDIR /app
 
