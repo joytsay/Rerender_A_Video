@@ -36,4 +36,4 @@ RUN --mount=type=cache,target=/home/app/.cache/pip,rw \
 # Expose and run
 VOLUME [ "/app/models", "/app/result", "/home/app/.cache" ]
 EXPOSE ${CONTAINER_PORT}
-CMD ["/app/entrypoint.sh"]
+# CMD ["/app/entrypoint.sh"]
